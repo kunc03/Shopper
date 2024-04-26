@@ -1,21 +1,26 @@
 import Head from 'next/head';
 import Banner from '../components/Banner';
-import { ProductData } from '../types';
+import { Product } from '../types';
 import { useEffect, useState } from 'react';
 import Products from '../components/Products';
 
-export default function Home() {
-  const [products, setProducts] = useState<ProductData[]>([]);
+interface Props {
+  productData: Product;
+}
 
-  const fetchData = async () => {
-    await fetch('http://localhost:3000/api/productdata')
-      .then((res) => res.json())
-      .then((data) => setProducts(data));
-  };
+export default function Home({ productData }: Props) {
+  console.log(productData);
+  // const [products, setProducts] = useState<ProductData[]>([]);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // const fetchData = async () => {
+  //   await fetch('http://localhost:3000/api/productdata')
+  //     .then((res) => res.json())
+  //     .then((data) => setProducts(data));
+  // };
+
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
 
   return (
     <>
@@ -28,19 +33,19 @@ export default function Home() {
       <main className="bg-lightBlue relative">
         <div className="max-w-contentContainer mx-auto bg-white">
           <Banner />
-          <Products productData={products} />
+          <Products productData={productData} />
         </div>
       </main>
     </>
   );
 }
 
-// export const getServerSideProps = async () => {
-//   const productData = (await fetch('http://localhost:3000/api/productdata')).json();
+export const getServerSideProps = async () => {
+  const productData = await (await fetch('http://localhost:3000/api/productdata')).json();
 
-//   return {
-//     props: {
-//       productData,
-//     },
-//   };
-// };
+  return {
+    props: {
+      productData,
+    },
+  };
+};
