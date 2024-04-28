@@ -24,6 +24,7 @@ export interface ProductData {
 }
 
 export interface StoreProduct {
+  email: string | number | null;
   _id: number;
   title: string;
   description: string;

@@ -8,19 +8,24 @@ interface Props {
   productData: Product;
 }
 
-export default function Home({ productData }: Props) {
-  console.log(productData);
-  // const [products, setProducts] = useState<ProductData[]>([]);
+async function getProducts() {
+  const res = await fetch('http://localhost:3000/api/productdata');
 
-  // const fetchData = async () => {
-  //   await fetch('http://localhost:3000/api/productdata')
-  //     .then((res) => res.json())
-  //     .then((data) => setProducts(data));
-  // };
+  return res.json();
+}
 
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
+export default function Home() {
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const fetchData = async () => {
+    await fetch('/api/productdata')
+      .then((res) => res.json())
+      .then((data) => setProducts(data));
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <>
@@ -33,19 +38,19 @@ export default function Home({ productData }: Props) {
       <main className="bg-lightBlue relative">
         <div className="max-w-contentContainer mx-auto bg-white">
           <Banner />
-          <Products productData={productData} />
+          <Products productData={products} />
         </div>
       </main>
     </>
   );
 }
 
-export const getServerSideProps = async () => {
-  const productData = await (await fetch('http://localhost:3000/api/productdata')).json();
+// export const getServerSideProps = async () => {
+//   const productData = await (await fetch('/api/productdata')).json();
 
-  return {
-    props: {
-      productData,
-    },
-  };
-};
+//   return {
+//     props: {
+//       productData,
+//     },
+//   };
+// };

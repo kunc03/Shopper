@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
 import { useDispatch, useSelector } from 'react-redux';
 import { phoneImg, warningImg } from '../public/assets/images';
 import Image from 'next/image';
@@ -10,15 +11,27 @@ import { MdOutlineAdd } from 'react-icons/md';
 import FormatePrice from './FormatePrice';
 import { deleteItem, minusQuantity, plusQuantity, resetCart } from '../redux/shopperSlice';
 import { IoMdClose } from 'react-icons/io';
-import { Store } from '@reduxjs/toolkit';
-import { loadStripe } from '@stripe/stripe-js';
-import axios from 'axios';
 import { useSession } from 'next-auth/react';
+import { checkoutOrder } from '../actions/order.actions';
+import axios from 'axios';
+
+// loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const CartPage = () => {
+  // useEffect(() => {
+  //   // Check to see if this is a redirect back from Checkout
+  //   const query = new URLSearchParams(window.location.search);
+  //   if (query.get('success')) {
+  //     console.log('Order placed! You will receive an email confirmation.');
+  //   }
+
+  //   if (query.get('canceled')) {
+  //     console.log('Order canceled -- continue to shop around and checkout when you’re ready.');
+  //   }
+  // }, []);
+
   const { data: session } = useSession();
   const dispatch = useDispatch();
-  const stripePromise = loadStripe(process.env.stripe_public_key);
   const productData = useSelector((state: any) => state.shopper.productData);
   const userInfo = useSelector((state: any) => state.shopper.userInfo);
   const [warningMsg, setWarningMsg] = useState(false);
@@ -26,36 +39,53 @@ const CartPage = () => {
   const [totalOldPrice, setTotalOldPrice] = useState(0);
   const [totalSavings, setTotalSavings] = useState(0);
   const [totalAmt, setTotalAmt] = useState(0);
+  const [name, setName] = useState('');
 
   useEffect(() => {
     setWarningMsg(true);
     let oldPrice = 0;
     let savings = 0;
     let amt = 0;
+    let name = '';
     productData.map((item: StoreProduct) => {
       oldPrice += item.oldPrice * item.quantity;
       savings += item.oldPrice - item.price;
       amt += item.price * item.quantity;
+      name = item.title;
       return;
     });
+    setName(name);
     setTotalOldPrice(oldPrice);
     setTotalSavings(savings);
     setTotalAmt(amt);
   }, [productData]);
 
   const handleCheckout = async () => {
-    const stripe = await stripePromise;
+    // console.log(productData);
 
-    // Create a checkout session
-    const checkoutSession = await axios.post('api/create-checkout-session', {
-      items: productData,
+    const data = {
+      name: session?.user?.name,
       email: session?.user?.email,
-    });
-    // Redirecting user to Stripe Checkout
-    const result: any = await stripe?.redirectToCheckout({
-      sessionId: checkoutSession.data.id,
-    });
-    if (result?.error) alert(result?.error.message);
+      items: productData,
+    };
+
+    const message = () => {
+      return `
+Data Customer : 
+  Nama  : ${data.name}
+  Email : ${data.email}
+
+Data Product : 
+  ${data.items.map((item: any) => `${item.title} (${item.quantity} items x $ ${item.price}) \n`)}
+Total : $ ${totalAmt}
+
+Terima Kasih
+  `;
+    };
+
+    const messageWA = message();
+
+    window.open('https://web.whatsapp.com/send?phone=6281229363084&text=' + encodeURIComponent(messageWA));
   };
 
   return (
@@ -63,7 +93,7 @@ const CartPage = () => {
       <div className="w-full flex gap-10">
         <div className="w-2/3 flex flex-col gap-5">
           <h1 className="text-lg font-bold text-black">
-            Cart <span className="text-lightText font-normal">({productData.length} items)</span>
+            Cart <span className="text-lightText font-normal"> ({productData.length} items)</span>
           </h1>
           {/* Pickup Details */}
           <div>
@@ -244,7 +274,7 @@ const CartPage = () => {
               </div>
               <div className="text-sm flex justify-between">
                 <p className="font-semibold">Pekalongan</p>
-                <p className="text-zinc-800">Calculated at checkout</p>
+                <p className="text-zinc-800"> Calculated at checkout</p>
               </div>
             </div>
           </div>
